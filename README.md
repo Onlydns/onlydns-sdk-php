@@ -43,7 +43,7 @@ $client->addRecord(
     domainName: 'example.com',
     name: 'api',
     type: RecordType::A,
-    records: '192.0.2.1',
+    records: ['192.0.2.1'],
     ttl: 300
 );
 
