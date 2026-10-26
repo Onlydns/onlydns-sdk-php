@@ -11,6 +11,7 @@ use OnlyDNS\Exceptions\OnlyDNSException;
 use OnlyDNS\Exceptions\ValidationException;
 use OnlyDNS\Models\DNSRecord;
 use OnlyDNS\Models\DNSSECStatus;
+use OnlyDNS\Models\DomainTsigPermissions;
 use OnlyDNS\Models\RecordType;
 use OnlyDNS\Models\TsigAlgorithm;
 use OnlyDNS\Models\TsigKey;
@@ -457,6 +458,28 @@ class OnlyDNSClient
     }
 
     /**
+     * Get TSIG keys and permissions for a domain.
+     *
+     * @param string $domainName
+     * @return array<string, DomainTsigPermissions>
+     */
+    public function getDomainTsig(string $domainName): array
+    {
+        $encoded = rawurlencode($domainName);
+        $res = $this->request('GET', "/dns/$encoded/tsig");
+        if (!is_array($res)) {
+            return [];
+        }
+        $result = [];
+        foreach ($res as $k => $v) {
+            if (is_array($v)) {
+                $result[(string) $k] = DomainTsigPermissions::fromArray($v);
+            }
+        }
+        return $result;
+    }
+
+    /**
      * Delete all TSIG keys from a domain.
      *
      * @param string $domainName
@@ -475,20 +498,26 @@ class OnlyDNSClient
      * @param string $keyName
      * @param bool $allowAxfr
      * @param bool $allowDnsUpdate
+     * @param array<string>|null $subdomains Optional list of restricted subdomains
      * @return void
      */
     public function updateDomainTsig(
         string $domainName,
         string $keyName,
         bool $allowAxfr,
-        bool $allowDnsUpdate
+        bool $allowDnsUpdate,
+        ?array $subdomains = null
     ): void {
         $encodedDomain = rawurlencode($domainName);
         $encodedKey = rawurlencode($keyName);
-        $this->request('PATCH', "/dns/$encodedDomain/tsig/$encodedKey", [], [
+        $body = [
             'allowAxfr' => $allowAxfr,
             'allowDnsUpdate' => $allowDnsUpdate,
-        ]);
+        ];
+        if ($subdomains !== null) {
+            $body['subdomains'] = $subdomains;
+        }
+        $this->request('PATCH', "/dns/$encodedDomain/tsig/$encodedKey", [], $body);
     }
 
     // -------------------------------------------------------------------------

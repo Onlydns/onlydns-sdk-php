@@ -80,12 +80,16 @@ $keys = $client->getTsigKeys();
 $newKey = $client->createTsigKey(algorithm: TsigAlgorithm::HMAC_SHA256);
 echo "Created TSIG key: {$newKey->name}" . PHP_EOL;
 
-// Update Domain TSIG permissions
+// Get TSIG keys configured on a domain
+$domainTsig = $client->getDomainTsig('example.com');
+
+// Update Domain TSIG permissions (with optional subdomain restrictions)
 $client->updateDomainTsig(
     domainName: 'example.com',
     keyName: $newKey->name,
     allowAxfr: true,
-    allowDnsUpdate: true
+    allowDnsUpdate: true,
+    subdomains: ['_acme-challenge', 'dyn']
 );
 
 // Delete all TSIG keys on a domain

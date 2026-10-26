@@ -141,7 +141,45 @@ function runTests(): void
     $key = $client->createTsigKey(TsigAlgorithm::HMAC_SHA256);
     assert($key->name === 'key-abc');
     assert($key->algorithm === TsigAlgorithm::HMAC_SHA256);
-    echo "  [OK] TSIG key creation\n";
+
+    // Test Domain TSIG Permissions Model & Update/Get
+    $perm = \OnlyDNS\Models\DomainTsigPermissions::fromArray([
+        'allowAxfr' => true,
+        'allowDnsUpdate' => true,
+        'subdomains' => ['_acme_challenge', 'mail'],
+    ]);
+    assert($perm->allowAxfr === true);
+    assert($perm->allowDnsUpdate === true);
+    assert($perm->subdomains === ['_acme_challenge', 'mail']);
+    assert($perm->toArray() === [
+        'allowAxfr' => true,
+        'allowDnsUpdate' => true,
+        'subdomains' => ['_acme_challenge', 'mail'],
+    ]);
+
+    $client->queueResponse(null); // updateDomainTsig
+    $client->updateDomainTsig('example.com', 'key-abc', true, true, ['_acme_challenge']);
+    assert(count($client->recordedRequests) === 2);
+    assert($client->recordedRequests[1]['method'] === 'PATCH');
+    assert($client->recordedRequests[1]['path'] === '/dns/example.com/tsig/key-abc');
+    assert($client->recordedRequests[1]['body'] === [
+        'allowAxfr' => true,
+        'allowDnsUpdate' => true,
+        'subdomains' => ['_acme_challenge'],
+    ]);
+
+    $client->queueResponse([
+        'key-abc' => [
+            'allowAxfr' => false,
+            'allowDnsUpdate' => true,
+            'subdomains' => ['_acme_challenge'],
+        ],
+    ]);
+    $domainPerms = $client->getDomainTsig('example.com');
+    assert(isset($domainPerms['key-abc']));
+    assert($domainPerms['key-abc']->subdomains === ['_acme_challenge']);
+
+    echo "  [OK] TSIG key creation and domain permissions\n";
 
     // 6. Test createDomain
     $client = new MockOnlyDNSClient('test_token');
