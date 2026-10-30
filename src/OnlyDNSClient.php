@@ -18,6 +18,7 @@ use OnlyDNS\Models\TsigKey;
 
 class OnlyDNSClient
 {
+    public const VERSION = '1.0.1';
     public const DEFAULT_BASE_URL = 'https://api.onlydns.com/v1';
 
     private readonly string $apiToken;
@@ -30,14 +31,12 @@ class OnlyDNSClient
         float $timeout = 30.0
     ) {
         $token = $apiToken
-            ?? (getenv('ONLYDNS_API_KEY') ?: null)
             ?? (getenv('ONLYDNS_API_TOKEN') ?: null)
-            ?? ($_ENV['ONLYDNS_API_KEY'] ?? null)
             ?? ($_ENV['ONLYDNS_API_TOKEN'] ?? null);
 
         if (!$token) {
             throw new AuthenticationException(
-                'API token is required. Pass apiToken or set the ONLYDNS_API_KEY environment variable.'
+                'API token is required. Pass apiToken or set the ONLYDNS_API_TOKEN environment variable.'
             );
         }
 
@@ -71,7 +70,7 @@ class OnlyDNSClient
         $headers = [
             'Authorization: Bearer ' . $this->apiToken,
             'Accept: application/json',
-            'User-Agent: OnlyDNS-PHP-SDK/1.0.0',
+            'User-Agent: OnlyDNS-PHP-SDK/1.0.1',
         ];
 
         $ch = curl_init();

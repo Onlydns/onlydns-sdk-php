@@ -63,8 +63,8 @@ function runTests(): void
     // 1. Test Authentication Requirement
     $authPassed = false;
     try {
-        putenv('ONLYDNS_API_KEY');
         putenv('ONLYDNS_API_TOKEN');
+        unset($_ENV['ONLYDNS_API_TOKEN']);
         new OnlyDNSClient(apiToken: null);
     } catch (AuthenticationException $e) {
         $authPassed = true;

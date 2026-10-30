@@ -1,15 +1,19 @@
 # OnlyDNS PHP SDK
 
-Official PHP SDK for the [OnlyDNS System API](https://api-docs.onlydns.com/).
+Official PHP SDK for [OnlyDNS](https://www.onlydns.com) to programmatically manage authoritative Anycast DNS zones, records, 1-click DNSSEC, and RFC 2136 TSIG keys. Learn more in the [OnlyDNS Technical How-To Guides](https://www.onlydns.com/howto/).
 
-Designed for high developer utility and seamless AI agent tool calling in modern PHP 8.1+ applications.
+```bash
+composer require onlydns/onlydns-sdk
+```
+
+**Authentication Environment Variable:** `ONLYDNS_API_TOKEN`.
 
 ## Features
 
 - **PHP 8.1+ Native**: Strongly typed properties, Enums (`RecordType`, `TsigAlgorithm`), and strict types.
 - **High-Level Atomic Helpers**: Simplify record updates via `addRecord()`, `removeRecord()`, `updateRecord()`, and `findRecords()`.
 - **Zero Heavy Dependencies**: Uses standard PHP extensions (`ext-curl` and `ext-json`) with no framework coupling.
-- **Environment Auto-Configuration**: Automatically resolves bearer tokens from `ONLYDNS_API_KEY` or `ONLYDNS_API_TOKEN`.
+- **Environment Auto-Configuration**: Automatically resolves bearer tokens from `ONLYDNS_API_TOKEN`.
 
 ## Installation
 
@@ -25,7 +29,7 @@ composer require onlydns/onlydns-sdk
 use OnlyDNS\OnlyDNSClient;
 use OnlyDNS\Models\RecordType;
 
-// Initialize client (falls back to getenv('ONLYDNS_API_KEY'))
+// Initialize client (falls back to getenv('ONLYDNS_API_TOKEN'))
 $client = new OnlyDNSClient(apiToken: 'your_api_bearer_token');
 
 // 1. List Domains
