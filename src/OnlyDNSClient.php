@@ -18,7 +18,7 @@ use OnlyDNS\Models\TsigKey;
 
 class OnlyDNSClient
 {
-    public const VERSION = '1.0.1';
+    public const VERSION = '1.0.2';
     public const DEFAULT_BASE_URL = 'https://api.onlydns.com/v1';
 
     private readonly string $apiToken;
@@ -70,7 +70,7 @@ class OnlyDNSClient
         $headers = [
             'Authorization: Bearer ' . $this->apiToken,
             'Accept: application/json',
-            'User-Agent: OnlyDNS-PHP-SDK/1.0.1',
+            'User-Agent: OnlyDNS-PHP-SDK/' . self::VERSION,
         ];
 
         $ch = curl_init();
@@ -558,5 +558,267 @@ class OnlyDNSClient
     {
         $encoded = rawurlencode($domainName);
         $this->request('DELETE', "/dns/$encoded/dnssec");
+    }
+
+    // -------------------------------------------------------------------------
+    // Portal User Management API
+    // -------------------------------------------------------------------------
+
+    /**
+     * List all portal users for the authenticated account.
+     *
+     * @return array<array<string, mixed>>
+     */
+    public function listUsers(): array
+    {
+        $res = $this->request('GET', '/users');
+        return is_array($res) ? $res : [];
+    }
+
+    /**
+     * Get details for a specific portal user.
+     *
+     * @param string $userId
+     * @return array<string, mixed>
+     */
+    public function getUser(string $userId): array
+    {
+        $encoded = rawurlencode($userId);
+        $res = $this->request('GET', "/users/$encoded");
+        return is_array($res) ? $res : [];
+    }
+
+    /**
+     * Invite / create a new portal user with specific scopes and zone restrictions.
+     *
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
+    public function createUser(array $data): array
+    {
+        $res = $this->request('POST', '/users', [], $data);
+        return is_array($res) ? $res : [];
+    }
+
+    /**
+     * Update an existing portal user's assigned scopes, zone restrictions, or permissions.
+     *
+     * @param string $userId
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
+    public function updateUser(string $userId, array $data): array
+    {
+        $encoded = rawurlencode($userId);
+        $res = $this->request('PATCH', "/users/$encoded", [], $data);
+        return is_array($res) ? $res : [];
+    }
+
+    /**
+     * Deactivate a portal user.
+     *
+     * @param string $userId
+     * @return void
+     */
+    public function deleteUser(string $userId): void
+    {
+        $encoded = rawurlencode($userId);
+        $this->request('DELETE', "/users/$encoded");
+    }
+
+    // -------------------------------------------------------------------------
+    // API Token Management API
+    // -------------------------------------------------------------------------
+
+    /**
+     * List all API access tokens for the authenticated account.
+     *
+     * @return array<array<string, mixed>>
+     */
+    public function listTokens(): array
+    {
+        $res = $this->request('GET', '/tokens');
+        return is_array($res) ? $res : [];
+    }
+
+    /**
+     * Get metadata for a specific API token.
+     *
+     * @param string $tokenId
+     * @return array<string, mixed>
+     */
+    public function getToken(string $tokenId): array
+    {
+        $encoded = rawurlencode($tokenId);
+        $res = $this->request('GET', "/tokens/$encoded");
+        return is_array($res) ? $res : [];
+    }
+
+    /**
+     * Provision a new API access token with scopes, allowed networks, and optional expiration.
+     *
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
+    public function createToken(array $data = []): array
+    {
+        $res = $this->request('POST', '/tokens', [], $data);
+        return is_array($res) ? $res : [];
+    }
+
+    /**
+     * Revoke / deactivate an API access token.
+     *
+     * @param string $tokenId
+     * @return void
+     */
+    public function deleteToken(string $tokenId): void
+    {
+        $encoded = rawurlencode($tokenId);
+        $this->request('DELETE', "/tokens/$encoded");
+    }
+
+    // -------------------------------------------------------------------------
+    // Account & Custom OIDC SSO API
+    // -------------------------------------------------------------------------
+
+    /**
+     * Retrieve account metadata, contact details, and billing package feature entitlements.
+     *
+     * @return array<string, mixed>
+     */
+    public function getAccount(): array
+    {
+        $res = $this->request('GET', '/account');
+        return is_array($res) ? $res : [];
+    }
+
+    /**
+     * Retrieve account billing status, balances, and suspension details.
+     *
+     * @return array<string, mixed>
+     */
+    public function getAccountBilling(): array
+    {
+        $res = $this->request('GET', '/account/billing');
+        return is_array($res) ? $res : [];
+    }
+
+    /**
+     * Retrieve real-time account resource usage and plan feature limits.
+     *
+     * @return array<string, mixed>
+     */
+    public function getAccountMetrics(): array
+    {
+        $res = $this->request('GET', '/account/metrics');
+        return is_array($res) ? $res : [];
+    }
+
+    /**
+     * Retrieve custom OIDC Single Sign-On configuration, enforcement policy, and non-compliant users.
+     *
+     * @return array<string, mixed>
+     */
+    public function getAccountOidc(): array
+    {
+        $res = $this->request('GET', '/account/oidc');
+        return is_array($res) ? $res : [];
+    }
+
+    /**
+     * Create or update custom OIDC Single Sign-On configuration and enforcement settings.
+     *
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
+    public function saveAccountOidc(array $data): array
+    {
+        $res = $this->request('POST', '/account/oidc', [], $data);
+        return is_array($res) ? $res : [];
+    }
+
+    /**
+     * Remove custom OIDC Single Sign-On configuration from the account.
+     *
+     * @return array<string, mixed>
+     */
+    public function deleteAccountOidc(): array
+    {
+        $res = $this->request('DELETE', '/account/oidc');
+        return is_array($res) ? $res : [];
+    }
+
+    /**
+     * Test OIDC discovery URL reachability and retrieve identity provider endpoint metadata.
+     *
+     * @param string|array<string, mixed>|null $optionsOrUrl
+     * @param string|null $clientId
+     * @param string|null $clientSecret
+     * @return array<string, mixed>
+     */
+    public function testAccountOidc($optionsOrUrl = null, ?string $clientId = null, ?string $clientSecret = null): array
+    {
+        $body = null;
+        if (is_array($optionsOrUrl)) {
+            $body = $optionsOrUrl;
+        } elseif (is_string($optionsOrUrl)) {
+            $body = ['discoveryUrl' => $optionsOrUrl];
+            if ($clientId !== null) {
+                $body['clientId'] = $clientId;
+            }
+            if ($clientSecret !== null) {
+                $body['clientSecret'] = $clientSecret;
+            }
+        } elseif ($clientId !== null || $clientSecret !== null) {
+            $body = [];
+            if ($clientId !== null) {
+                $body['clientId'] = $clientId;
+            }
+            if ($clientSecret !== null) {
+                $body['clientSecret'] = $clientSecret;
+            }
+        }
+        $res = $this->request('POST', '/account/oidc/test', [], $body);
+        return is_array($res) ? $res : [];
+    }
+
+    // -------------------------------------------------------------------------
+    // Authentication & Login API
+    // -------------------------------------------------------------------------
+
+    /**
+     * Authenticate user credentials and receive a short-lived signed JWT API token.
+     *
+     * @param string $username
+     * @param string $password
+     * @param string|null $baseUrl
+     * @return array<string, mixed>
+     */
+    public static function login(string $username, string $password, ?string $baseUrl = null): array
+    {
+        $url = rtrim($baseUrl ?? self::DEFAULT_BASE_URL, '/') . '/auth/login';
+        $payload = json_encode(['username' => $username, 'password' => $password], JSON_THROW_ON_ERROR);
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Accept: application/json',
+            'User-Agent: OnlyDNS-PHP-SDK/' . self::VERSION,
+        ]);
+
+        $responseBody = curl_exec($ch);
+        $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode !== 200 || !is_string($responseBody)) {
+            throw new AuthenticationException('Login failed: Invalid credentials or disabled user account');
+        }
+
+        return (array) json_decode($responseBody, true);
     }
 }

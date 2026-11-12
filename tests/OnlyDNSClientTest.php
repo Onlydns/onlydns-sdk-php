@@ -221,6 +221,88 @@ function runTests(): void
     $client->disableDnssec('example.com');
     echo "  [OK] DNSSEC operations\n";
 
+    // 8. Test Account and OIDC operations
+    $client = new MockOnlyDNSClient('test_token');
+    $client->queueResponse([
+        'accountId' => '018f1234-5678-7000-8000-000000000001',
+        'activeAt' => '2024-01-01T00:00:00+00:00',
+        'companyName' => 'Acme Corporation',
+        'firstName' => 'Jane',
+        'lastName' => 'Doe',
+        'address' => [
+            'street1' => '123 Innovation Way',
+            'city' => 'Austin',
+            'state' => 'TX',
+            'countryId' => 'US',
+            'postalCode' => '78701',
+        ],
+        'package' => [
+            'id' => '018f1234-5678-7000-8000-000000000002',
+            'description' => 'Enterprise Tier',
+            'amount' => 49.99,
+            'features' => [
+                'domains' => 50,
+                'records' => 5000,
+                'queries' => 1000000,
+                'dnssec' => true,
+                'tsig' => true,
+                'proxy' => true,
+                'customSSO' => true,
+            ],
+        ],
+    ]);
+    $client->queueResponse([
+        'configured' => true,
+        'accountId' => '018f1234-5678-7000-8000-000000000001',
+        'discoveryUrl' => 'https://idp.example.com/.well-known/openid-configuration',
+        'clientId' => 'client-123',
+        'clientSecretMasked' => 'secr*****',
+        'enforceSso' => false,
+        'breakGlassAdminsCount' => 1,
+        'canEnforceSso' => true,
+        'nonCompliantUsers' => [],
+    ]);
+    $client->queueResponse([
+        'configured' => true,
+        'discoveryUrl' => 'https://idp.example.com/.well-known/openid-configuration',
+        'clientId' => 'client-123',
+        'enforceSso' => true,
+    ]);
+    $client->queueResponse([
+        'success' => true,
+        'issuer' => 'https://idp.example.com',
+    ]);
+    $client->queueResponse([
+        'success' => true,
+        'message' => 'OIDC configuration removed successfully',
+    ]);
+
+    $account = $client->getAccount();
+    assert($account['accountId'] === '018f1234-5678-7000-8000-000000000001');
+    assert($account['companyName'] === 'Acme Corporation');
+    assert($account['package']['features']['customSSO'] === true);
+
+    $oidc = $client->getAccountOidc();
+    assert($oidc['configured'] === true);
+    assert($oidc['clientId'] === 'client-123');
+
+    $savedOidc = $client->saveAccountOidc([
+        'discoveryUrl' => 'https://idp.example.com/.well-known/openid-configuration',
+        'clientId' => 'client-123',
+        'clientSecret' => 'secret123',
+        'enforceSso' => true,
+    ]);
+    assert($savedOidc['enforceSso'] === true);
+
+    $testOidc = $client->testAccountOidc('https://idp.example.com/.well-known/openid-configuration');
+    assert($testOidc['success'] === true);
+    assert($testOidc['issuer'] === 'https://idp.example.com');
+
+    $delOidc = $client->deleteAccountOidc();
+    assert($delOidc['success'] === true);
+
+    echo "  [OK] Account and OIDC operations\n";
+
     echo "All PHP SDK tests passed successfully!\n";
 }
 
